@@ -1,0 +1,25 @@
+[core]
+	excludesfile = ~/.gitignore_global
+	editor = atom --wait
+	compression = -1
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path =
+[mergetool "sourcetree"]
+	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[user]
+	name = Marc Bittner
+	email = marc.bittner@ring.com
+	singingkey = 0x015FEB9CB8BE00E4
+[commit]
+	template = /Users/phaedrus/.git_commit_msg.txt
+[rebase]
+	autosquash = true
+[filter "openssl"]
+    smudge = ~/.gitencrypt/smudge_filter_openssl
+    clean = ~/.gitencrypt/clean_filter_openssl
+[diff "openssl"]
+    textconv = ~/.gitencrypt/diff_filter_openssl
+[color]
+	ui = true

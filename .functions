@@ -1,0 +1,1110 @@
+requireProgram() {
+
+  local functionName debugOutput
+  unset ${functionName} ${debugOutput}
+  functionName="${FUNCNAME[0]}"
+  debugOutput=1
+
+  command -v ${1} >/dev/null 2>&1 &&
+    {
+      echo >&2 "${functionName} requires ${1} and it is installed."
+      return 0
+    } ||
+    {
+      echo >&2 "${functionName} requires ${1} but it's not installed.  Aborting."
+      return 1
+    }
+}
+
+chrome () {
+    open -a "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" "$1"
+  }
+
+
+  trackAllGitBranches() {
+
+    local functionName debugOutput
+    unset ${functionName} ${debugOutput}
+    functionName="${FUNCNAME[0]}"
+    debugOutput=1
+
+    [ -d .git ]  >/dev/null 2>&1 &&
+      {
+        [[ debugOutput -gt 0 ]] && echo >&2 "Git repository found. Tracking all branches"
+        for branch in $(git branch --all | grep '^\s*remotes' | egrep --invert-match '(:?HEAD|master)$');
+              do
+                git branch --track "${branch##*/}" "$branch"
+              done
+        return 0
+      } ||
+      {
+        echo >&2 "No git repository found. Aborting."
+        return 1
+      }
+  }
+
+
+getTimeMachineInfo() {
+  local percent GetPercent DebugOutput
+  DebugOutput=0
+  while [[ ${1} ]]; do
+    case "${1}" in
+    --percent)
+      GetPercent=1
+      ;;
+    --debug)
+      DebugOutput=1
+      ;;
+    *)
+      echo "Unknown parameter: ${1}" >&2
+      return 1
+      ;;
+    esac
+
+    if ! shift; then
+      echo 'Missing parameter argument.' >&2
+      return 1
+    fi
+  done
+
+  [[ DebugOutput -gt 0 ]] && echo -e "Full output: \n $(tmutil status)"
+
+  [[ GetPercent -gt 0 ]] &&
+    [[ $(tmutil status | awk '/_raw_Percent/ {print $3}' | grep -o '[0-9].[0-9]\+' | awk '{print $1*100}') ]] || echo -e "\nTime Machine Backup percentage not yet available"
+
+}
+
+getProcessPaths() {
+  local string
+  DebugOutput=0
+  while [[ ${1} ]]; do
+    case "${1}" in
+    --string)
+      string=${2}
+      shift
+      ;;
+
+    --debug)
+      DebugOutput=1
+      ;;
+    *)
+      echo "Unknown parameter: ${1}" >&2
+      return 1
+      ;;
+    esac
+
+    if ! shift; then
+      echo 'Missing parameter argument.' >&2
+      return 1
+    fi
+  done
+
+  ps -ef | grep $string | awk '{print $8}'
+}
+
+uuid() {
+  local N B T
+
+  for ((N = 0; N < 16; ++N)); do
+    B=$(($RANDOM % 255))
+
+    if ((N == 6)); then
+      printf '4%x' $((B % 15))
+    elif ((N == 8)); then
+      local C='89ab'
+      printf '%c%x' ${C:$(($RANDOM % ${#C})):1} $((B % 15))
+    else
+      printf '%02x' $B
+    fi
+
+    for T in 3 5 7 9; do
+      if ((T == N)); then
+        printf '-'
+        break
+      fi
+    done
+  done
+
+  echo
+}
+
+findDotFiles() {
+  local functionName debugOutput
+  unset ${functionName} ${debugOutput}
+  functionName="${FUNCNAME[0]}"
+  [[ -d "${1}" ]] ||
+    {
+      echo >&2 "${functionName}: ${1} is not a valid path. Aborting."
+      return 1
+    }
+  find "${1}" -maxdepth 1 -type f -name '.*' -exec basename {} \;
+}
+
+startNewSshAgent() {
+  eval $(ssh-agent)
+}
+
+WhoisASN() {
+  found_asname=$(whois -h whois.cymru.com " -f -w -c -p as$1" | sed -e 's/\ *|\ */|/g' | awk -F '[|]' {'print $3'})
+  printf "$red[AS$1] $green$found_asname\n$white"
+}
+
+WhoisIP() {
+  printf "$white%15s -> $yellow(route: %18s) $white-> $red[AS%s] $green%s\n" "$1" "$found_route" "$found_asn" "$found_asname"
+}
+
+LookupASNAndRouteFromIP() {
+  found_route=""
+  found_asn=""
+  found_asname=""
+  output=$(whois -h whois.cymru.com " -f -p $1" | sed -e 's/\ *|\ */|/g')
+  found_asn=$(echo $output | awk -F'[|]' {'print $1'})
+  found_asname=$(echo $output | awk -F'[|]' {'print $4'})
+  found_route=$(echo $output | awk -F'[|]' {'print $3'})
+}
+
+ResolveHostnameToIPList() {
+  ip=$(host $1 | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+  echo -e "$ip\n"
+}
+
+resolveAsnIps() {
+  whois -h whois.radb.net -- '-i origin ${1}' | grep -Eo "([0-9.]+){4}/[0-9]+"
+}
+
+asn() {
+  green="\e[32m"
+  yellow="\e[33m"
+  white="\e[97m"
+  blue="\e[94m"
+  red="\e[31m"
+
+  input=$(echo $1 | sed -e 's/\/.*//g' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+  if [ -z "$input" ]; then
+    # Input is not an IPv4 Address. Check if it is a number (ASN)
+    asn=$(echo $1 | sed -e 's/[a|A][s|S]//g' | grep -E "^[0-9]*$")
+    if [ -z "$asn" ]; then
+      # Input is not an ASN either. Consider it a hostname and try to resolve it.
+      echo -e -n "${blue}Resolving \"$1\"... "
+      ip=$(ResolveHostnameToIPList $1)
+      if [ -z "$ip" ]; then
+        echo -e "\e[97m\e[101mError: unable to resolve hostname\e[39m\e[49m"
+        tput sgr0
+        return
+      fi
+      numips=$(echo "$ip" | wc -l)
+      [[ $numips == 1 ]] && s="" || s="es"
+      echo -e "$blue$numips IP address$s found:"
+      for singleip in $ip; do
+        LookupASNAndRouteFromIP $singleip
+        WhoisIP $singleip
+      done
+      tput sgr0
+      return
+    else
+      # Input is an ASN
+      WhoisASN $asn
+      tput sgr0
+      return
+    fi
+  else
+    # Input is an IPv4
+    LookupASNAndRouteFromIP $input
+    if [ -z "$found_asname" ] && [ -z "$found_route" ]; then
+      echo -e "\e[97m\e[101mError: no data found for $input\e[39m\e[49m"
+      tput sgr0
+      return
+    fi
+    echo -e "${green}1 IP address found:\e[39m"
+    WhoisIP $input
+    tput sgr0
+    return
+  fi
+
+}
+
+promptForPassword() {
+  unset PWORD
+  PWORD=
+  echo -n 'password: ' 1>&2
+  while IFS= read -r -n1 -s char; do
+    case "$(echo -n "$char" | od -An -tx1)" in
+    '') break ;; # EOL
+    ' 08' | ' 7f') # backspace or delete
+      if [ -n "$PWORD" ]; then
+        PWORD="$(echo "$PWORD" | sed 's/.$//')"
+        echo -n $'\b \b' 1>&2
+      fi
+      ;;
+    ' 15') # ^U or kill line
+      echo -n "$PWORD" | sed 's/./\cH \cH/g' >&2
+      PWORD=''
+      ;;
+    *)
+      PWORD="$PWORD$char"
+      echo -n '*' 1>&2
+      ;;
+    esac
+  done
+  echo $PWORD
+  unset $PWORD
+  return 0
+}
+
+timeout() {
+  (
+    set +b
+    sleep "$1" &
+    "${@:2}" &
+    wait -n
+    r=$?
+    kill -9 $(jobs -p)
+    exit $r
+  )
+}
+
+lso() {
+  ls -l "$@" | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf(" %0o ",k);print}'
+}
+
+addTrailingSlash() {
+  if [[ -z ${1} ]]; then # || \
+    #      -z ${source} ]]; then
+    echo "${FUNCNAME}: one or more variables are undefined"
+    return 1
+  fi
+  [[ "${1}" != */ ]] && STR="${1}/"
+  echo ${1}
+}
+
+symlinkAllFiles() {
+  local directory source
+  DebugOutput=0
+
+  while [[ ${1} ]]; do
+    case "${1}" in
+    --directory)
+      directory=${2}
+      shift
+      ;;
+    --source)
+      source=${2}
+      shift
+      ;;
+    --debug)
+      DebugOutput=1
+      ;;
+    *)
+      echo "Unknown parameter: ${1}" >&2
+      return 1
+      ;;
+    esac
+
+    if ! shift; then
+      echo 'Missing parameter argument.' >&2
+      return 1
+    fi
+  done
+
+  if [[ -z ${directory} || -z ${source} ]] \
+    ; then
+    # echo "${FUNCNAME}: one or more variables are undefined"
+    return 1
+  fi
+
+  [[ "${source}" != */ ]] && STR="${source}/"
+  [[ "${directory}" != */ ]] && STR="${directory}/"
+
+  [[ DebugOutput -ne 0 ]] && echo -e "source: ${source}\n directory: ${directory}"
+  linker="ln -sf ${source}* ${directory}"
+  [[ DebugOutput -ne 0 ]] && echo "linker: ${linker}"
+  eval "${linker}"
+}
+
+purgeSymlinksFrom() {
+  local directory source
+  DebugOutput=0
+
+  while [[ ${1} ]]; do
+    case "${1}" in
+    --directory)
+      directory=${2}
+      shift
+      ;;
+    --source)
+      source=${2}
+      shift
+      ;;
+    --debug)
+      DebugOutput=1
+      ;;
+    *)
+      echo "Unknown parameter: ${1}" >&2
+      return 1
+      ;;
+    esac
+
+    if ! shift; then
+      echo 'Missing parameter argument.' >&2
+      return 1
+    fi
+  done
+
+  if [[ -z ${directory} || -z ${source} ]] \
+    ; then
+    # echo "${FUNCNAME}: one or more variables are undefined"
+    return 1
+  fi
+
+  [[ "${source}" != */ ]] && STR="${source}/"
+  [[ "${directory}" != */ ]] && STR="${directory}/"
+  [[ DebugOutput -ne 0 ]] && echo -e "source: ${source}\n directory: ${directory}"
+  finder="find ${directory} -lname ${source}\* -delete"
+  [[ DebugOutput -ne 0 ]] && echo "finder: ${finder}"
+  eval "${finder}"
+}
+resolveFullPath() {
+  "$(eval echo ${1:?pathname expected})" || return 1
+}
+
+expandPath() {
+  local path
+  local -a pathElements resultPathElements
+  IFS=':' read -r -a pathElements <<<"$1"
+  : "${pathElements[@]}"
+  for path in "${pathElements[@]}"; do
+    : "$path"
+    case $path in
+    "~+"/*)
+      path=$PWD/${path#"~+/"}
+      ;;
+    "~-"/*)
+      path=$OLDPWD/${path#"~-/"}
+      ;;
+    "~"/*)
+      path=$HOME/${path#"~/"}
+      ;;
+    "~"*)
+      username=${path%%/*}
+      username=${username#"~"}
+      IFS=: read _ _ _ _ _ homedir _ < <(getent passwd "$username")
+      if [[ $path == */* ]]; then
+        path=${homedir}/${path#*/}
+      else
+        path=$homedir
+      fi
+      ;;
+    esac
+    resultPathElements+=("$path")
+  done
+  local result
+  printf -v result '%s:' "${resultPathElements[@]}"
+  printf '%s\n' "${result%:}"
+}
+
+backupFile() {
+  sudo cp ${1} ${1}_backup_$(date "+%Y-%m-%d_%H:%M")
+}
+
+directoryExists() {
+  DebugOutput=${2:-0}
+  cd ${1:?pathname expected} >/dev/null 2>&1 &&
+    {
+      [[ DebugOutput -ne 0 ]] && echo >&2 "${1} exists"
+      return 0
+    } ||
+    {
+      [[ DebugOutput -ne 0 ]] && echo >&2 "Unable to verify ${1} - Aborting."
+      return 1
+    }
+}
+
+isMounted() {
+  DebugOutput=${2:-0}
+  grep -qi ${1:?mount name expected} <(mount) &&
+    {
+      [[ DebugOutput -ne 0 ]] && echo >&2 "Mount idemtified by ${1} exists"
+      return 0
+    } ||
+    {
+      [[ DebugOutput -ne 0 ]] && echo >&2 "Mount idemtified by ${1} does not exist"
+      return 1
+    }
+}
+
+function mk() {
+  mkdir -p "$@" && cd "$@"
+}
+
+function digga() {
+  dig +nocmd "$1" any +multiline +noall +answer
+}
+
+function gui_password() {
+  if [[ -z $1 ]]; then
+    gui_prompt="Password:"
+  else
+    gui_prompt="$1"
+  fi
+  PW=$(
+    osascript <<EOF
+    tell application "System Events"
+        activate
+        text returned of (display dialog "${gui_prompt}" default answer "" with hidden answer)
+    end tell
+EOF
+  )
+
+  echo -n "${PW}"
+}
+
+functionRequires() {
+
+  local functionName debugOutput
+  unset ${functionName} ${debugOutput}
+  functionName="${FUNCNAME[0]}"
+  debugOutput=1
+
+  command -v ${1} >/dev/null 2>&1 &&
+    {
+      [[ DebugOutput -ne 0 ]] && echo >&2 "${functionName} requires ${1} and it is installed."
+      return 0
+    } ||
+    {
+      [[ DebugOutput -ne 0 ]] && echo >&2 "${functionName} requires ${1} but it's not installed.  Aborting."
+      return 1
+    }
+}
+
+function ContainsString() {
+
+  local functionName debugOutput
+  unset ${functionName} ${debugOutput}
+  functionName="${FUNCNAME[0]}"
+
+  if [[ "${1}" =~ ${2} ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+list-github-repos() {
+  local repos counter allrepos
+  unset repos counter allrepos
+  functionRequires jq
+  counter=1
+  DebugOutput=0
+
+  while [[ ${1} ]]; do
+    case "${1}" in
+    --token)
+      token=${2}
+      shift
+      ;;
+    --org)
+      org=${2}
+      shift
+      ;;
+    --debug)
+      DebugOutput=1
+      ;;
+    *)
+      echo "Unknown parameter: ${1}" >&2
+      return 1
+      ;;
+    esac
+
+    if ! shift; then
+      echo 'Missing parameter argument.' >&2
+      return 1
+    fi
+  done
+
+  if [[ -z ${org} || -z ${token} ]] \
+    ; then
+    echo "${FUNCNAME}: one or more variables are undefined"
+    return 1
+  fi
+
+  [[ DebugOutput -gt 0 ]] && echo "token: ${token}"
+  [[ DebugOutput -gt 0 ]] && echo "org: ${org}"
+  reposcount=0
+
+  while [ $reposcount -ne 1 ]; do
+    unset repos
+
+    repos=$(curl -s "https://api.github.com/orgs/${org}/repos?typr=all&page=${counter}&access_token=${token}&per_page-100" | jq .[].ssh_url)
+
+    allrepos+="\n${repos}"
+    ((counter++))
+    reposcount=$(echo "$repos" | wc -l)
+
+    if [ $reposcount -eq 1 ]; then
+      echo -e "${allrepos}" | tr -d '"'
+    fi
+  done
+
+}
+
+newline_to_spaces() {
+  tr '\n' ' ' <<<"$1" | sed 's/ $//'
+}
+
+colon_to_spaces() {
+  echo "${1//:/ }"
+}
+
+strip_lf() {
+  tr -d '\n' <<<"$1" | tr -d '\r'
+}
+
+strip_spaces() {
+  echo "${1// /}"
+}
+
+# https://web.archive.org/web/20121022051228/http://codesnippets.joyent.com/posts/show/1816
+strip_leading_space() {
+  printf "%s" "${1#"${1%%[![:space:]]*}"}"
+}
+strip_trailing_space() {
+  printf "%s" "${1%"${1##*[![:space:]]}"}"
+}
+
+# retrieve cipher from ServerHello (via openssl)
+get_cipher() {
+  awk '/Cipher *:/ { print $3 }' "$1"
+  #awk '/\<Cipher\>/ && !/Cipher is/  && !/^New/ { print $3 }' "$1"
+}
+
+is_number() {
+  [[ "$1" =~ ^[1-9][0-9]*$ ]] &&
+    return 0 ||
+    return 1
+}
+
+list-services() {
+  if [ -z "${1}" ]; then
+    launchctl list
+  else
+    launchctl list | grep -i "${1}"
+  fi
+}
+
+get-time-machine-logs() {
+
+  if [ -z "${1}" ]; then
+    start="$(date -j -v-12H +'%Y-%m-%d %H:%M:%S')"
+  else
+    start="$(date -j -v-${1}H +'%Y-%m-%d %H:%M:%S')"
+  fi
+
+  filter='processImagePath contains "backupd" and subsystem beginswith "com.apple.TimeMachine"'
+
+  # show the last 12 hours
+
+  echo ""
+  echo "[History (from $start)]"
+  echo ""
+
+  log show --style syslog --info --debug --start "$start" --predicate "$filter"
+
+  echo ""
+  echo "[Following]"
+  echo ""
+
+  log stream --style syslog --info --debug --predicate "$filter"
+}
+
+is_ipv4addr() {
+  local octet="(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
+  local ipv4address="$octet\\.$octet\\.$octet\\.$octet"
+
+  [[ -z "$1" ]] && return 1
+  # more than numbers, important for hosts like AAA.BBB.CCC.DDD.in-addr.arpa.DOMAIN.TLS
+  [[ -n $(tr -d '0-9\.' <<<"$1") ]] && return 1
+
+  grep -Eq "$ipv4address" <<<"$1" &&
+    return 0 ||
+    return 1
+}
+
+getPidEnvars() {
+  ps e $1 | cut -c$(expr 1 + $(ps p $pid | tail +2 | wc -c))- | xargs | tr " " "\n"
+}
+
+gclone() {
+  git clone ${1}
+}
+
+# Connecting to a server (Ctrl C exits)
+openssl-client() {
+  openssl s_client -status -connect "${1}":443
+}
+
+# Convert PEM private key, PEM certificate and PEM CA certificate (used by nginx, Apache, and other openssl apps) to a PKCS12 file (typically for use with Windows or Tomcat)
+openssl-convert-pem-to-p12() {
+  openssl pkcs12 -export -inkey "${1}" -in "${2}" -certfile ${3} -out ${4}
+}
+
+# Convert a PKCS12 file to PEM
+openssl-convert-p12-to-pem() {
+  openssl pkcs12 -nodes -in "${1}" -out "${2}"
+}
+
+# Convert a crt to a pem file
+openssl-crt-to-pem() {
+  openssl x509 -in "${1}" -out "${1:0:-4}".pem -outform PEM
+}
+
+# Check the modulus of a certificate (to see if it matches a key)
+openssl-check-certificate-modulus() {
+  openssl x509 -noout -modulus -in "${1}" | shasum -a 256
+}
+
+# Check the modulus of a key (to see if it matches a certificate)
+openssl-check-key-modulus() {
+  openssl rsa -noout -modulus -in "${1}" | shasum -a 256
+}
+
+# Check the modulus of a certificate request
+openssl-check-key-modulus() {
+  openssl req -noout -modulus -in "${1}" | shasum -a 256
+}
+
+# Encrypt a file (because zip crypto isn't secure)
+openssl-encrypt() {
+  openssl aes-256-cbc -in "${1}" -out "${2}"
+}
+
+# Decrypt a file
+openssl-decrypt() {
+  openssl aes-256-cbc -d -in "${1}" -out "${2}"
+}
+
+# For setting up public key pinning
+openssl-key-to-hpkp-pin() {
+  openssl rsa -in "${1}" -outform der -pubout | openssl dgst -sha256 -binary | openssl enc -base64
+}
+
+# For setting up public key pinning (directly from the site)
+openssl-website-to-hpkp-pin() {
+  openssl s_client -connect "${1}":443 | openssl x509 -pubkey -noout | openssl rsa -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
+}
+
+# Combines the key and the intermediate in a unified PEM file
+# (eg, for nginx)
+openssl-key-and-intermediate-to-unified-pem() {
+  echo -e "$(cat "${1}")\n$(cat "${2}")" >"${1:0:-4}"_unified.pem
+}
+
+nth() {
+  sed -n ${1}p
+}
+getEntropy() {
+  if [[ -n "$1" ]]; then
+    if [[ -e "$1" ]]; then
+      echo "scale = 2; $(gzip -c ${1} | wc -c) / $(cat ${1} | wc -c)" | bc
+    else
+      echo "file ($1) not found"
+    fi
+  else
+    datafile="$(mktemp entropy.XXXXX)"
+    cat - >"$datafile"
+    entropy "$datafile"
+    rm "$datafile"
+  fi
+}
+
+openInChrome() {
+  open -a "Google Chrome" $1
+}
+
+tarchive() {
+  local directory output
+  DebugOutput=0
+
+  while [[ ${1} ]]; do
+    case "${1}" in
+    --directory)
+      directory=${2}
+      shift
+      ;;
+    --output)
+      output=${2}
+      shift
+      ;;
+    --debug)
+      DebugOutput=1
+      ;;
+    *)
+      echo "Unknown parameter: ${1}" >&2
+      return 1
+      ;;
+    esac
+
+    if ! shift; then
+      echo 'Missing parameter argument.' >&2
+      return 1
+    fi
+  done
+
+  if [[ -z ${directory} ]]; then #|| \
+    ##  -z ${output} ]]; then
+    echo "${FUNCNAME}: one or more variables are undefined"
+    return 1
+  fi
+
+  datestamp="$(date +%s)"
+  cd ${directory}
+  archive_name=$(echo "$(pwd | tr "/" "-"):${datestamp}.tar.gz")
+  cd -
+  tar -czvf ${archive_name} -C ${directory} .
+
+  if [[ ! -z ${output} ]]; then
+    mv ./${archive_name} ${output}
+  fi
+}
+
+retcon() {
+  if [ -z ${1+x} ]; then
+    echo "Declining to delete your entire bash history"
+  else
+
+    grep -v "$1" "$HISTFILE" >/tmp/history
+
+    # Clear all items in the current sessions history which
+    # empties $HISTFILE.
+
+    history -c
+
+    #Overwrite the actual history file
+
+    mv /tmp/history "$HISTFILE"
+
+    #Reload it.
+
+    history -r "$HISTFILE" #Alternative: exec bash
+  fi
+}
+
+gpg_encrypt() {
+  gpg --symmetric -z 9 --require-secmem --cipher-algo AES256 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 --s2k-mode 3 --s2k-count 65000000 --compress-algo BZIP2 $@
+}
+
+# note: will decrypt to STDOUT by default, for security reasons. remove "-d" or pipe to file to write to disk
+gpg_decrypt() {
+  gpg -d $@
+}
+
+gristory() {
+  history | grep $1
+}
+
+export SSH_AUTH_SOCK=~/.ssh-auth-sock
+
+gpg_get_id() {
+  gpg --list-packets $1 | head | grep keyid | awk '{print $2}'
+}
+
+function _gpg_agent_kill() {
+  # TODO: error out after a few tries
+  STATUS=0
+  while [ $STATUS -eq 0 ]; do
+    pkill -U $UID gpg-agent >/dev/null
+    pgrep -U $UID gpg-agent >/dev/null
+    STATUS=$?
+  done
+}
+
+## match symlink to gpg-agent status without starting or stopping it
+function gpg-agent-link-socket() {
+  pgrep -U $UID gpg-agent >/dev/null
+
+  if [ $? -eq 0 ]; then
+    # gpg-agent running
+    # symlink SSH_AUTH_SOCK to .gnupg version
+    ln -fs ~/.gnupg/S.gpg-agent.ssh ~/.ssh-auth-sock
+    [[ "$1" == "-verbose" ]] && echo "gpg-agent is running." >/dev/stderr
+  else
+    # gpg-agent not running, use system ssh-agent
+    # symlink SSH_AUTH_SOCK to launchct getenv versino
+    ln -fs $(launchctl getenv SSH_AUTH_SOCK) ~/.ssh-auth-sock
+    [[ "$1" == "-verbose" ]] && echo "gpg-agent is not running." >/dev/stderr
+  fi
+}
+
+## UP
+function gpg-agent-up() {
+  # kill old agent
+  _gpg_agent_kill
+
+  # start new agent
+  ENV_VARS=$(gpg-agent --daemon -s --enable-ssh-support --use-standard-socket)
+
+  gpg-agent-link-socket
+}
+
+## DOWN
+function gpg-agent-down() {
+  # kill old agent
+  _gpg_agent_kill
+
+  gpg-agent-link-socket
+}
+
+function gpg-agent-status() {
+  gpg-agent-link-socket -verbose
+}
+
+function timer_now() {
+  /usr/local/opt/coreutils/libexec/gnubin/date +%s%N
+}
+
+function timer_start() {
+  timer_start=${timer_start:-$(timer_now)}
+}
+
+function find-aws-public-ip() {
+
+  aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text --profile security --region us-east-1
+
+}
+
+function timer_stop() {
+  local delta_us=$((($(timer_now) - $timer_start) / 1000))
+  local us=$((delta_us % 1000))
+  local ms=$(((delta_us / 1000) % 1000))
+  local s=$(((delta_us / 1000000) % 60))
+  local m=$(((delta_us / 60000000) % 60))
+  local h=$((delta_us / 3600000000))
+  # Goal: always show around 3 digits of accuracy
+  if ((h > 0)); then
+    timer_show=${h}h${m}m
+  elif ((m > 0)); then
+    timer_show=${m}m${s}s
+  elif ((s >= 10)); then
+    timer_show=${s}.$((ms / 100))s
+  elif ((s > 0)); then
+    timer_show=${s}.$(printf %03d $ms)s
+  elif ((ms >= 100)); then
+    timer_show=${ms}ms
+  elif ((ms > 0)); then
+    timer_show=${ms}.$((us / 100))ms
+  else
+    timer_show=${us}us
+  fi
+  unset timer_start
+}
+
+printTimestampReference() {
+  cat <<EOD
+        Format/result           |       Command              |          Output
+--------------------------------+----------------------------+------------------------------
+YYYY-MM-DD_hh:mm:ss             | date +%F_%T                | $(date +%F_%T)
+YYYYMMDD_hhmmss                 | date +%Y%m%d_%H%M%S        | $(date +%Y%m%d_%H%M%S)
+YYYYMMDD_hhmmss (UTC version)   | date --utc +%Y%m%d_%H%M%SZ | $(date --utc +%Y%m%d_%H%M%SZ)
+YYYYMMDD_hhmmss (with local TZ) | date +%Y%m%d_%H%M%S%Z      | $(date +%Y%m%d_%H%M%S%Z)
+YYYYMMSShhmmss                  | date +%Y%m%d%H%M%S         | $(date +%Y%m%d%H%M%S)
+YYYYMMSShhmmssnnnnnnnnn         | date +%Y%m%d%H%M%S%N       | $(date +%Y%m%d%H%M%S%N)
+YYMMDD_hhmmss                   | date +%y%m%d_%H%M%S        | $(date +%y%m%d_%H%M%S)
+Seconds since UNIX epoch:       | date +%s                   | $(date +%s)
+Nanoseconds only:               | date +%N                   | $(date +%N)
+Nanoseconds since UNIX epoch:   | date +%s%N                 | $(date +%s%N)
+ISO8601 UTC timestamp           | date --utc +%FT%TZ         | $(date --utc +%FT%TZ)
+ISO8601 UTC timestamp + ms      | date --utc +%FT%T.%3NZ     | $(date --utc +%FT%T.%3NZ)
+ISO8601 Local TZ timestamp      | date +%FT%T%Z              | $(date +%FT%T%Z)
+YYYY-MM-DD (Short day)          | date +%F\(%a\)             | $(date +%F\(%a\))
+YYYY-MM-DD (Long day)           | date +%F\(%A\)             | $(date +%F\(%A\))
+EOD
+}
+
+colorReference256() {
+  for i in {0..255}; do
+    printf "\x1b[48;5;%sm%3d\e[0m " "$i" "$i"
+    if ((i == 15)) || ((i > 15)) && (((i - 15) % 16 == 0)); then printf "\n"; fi
+  done
+}
+
+8bitReferenceTable() {
+  echo -en "\n   +  "
+  for i in {0..35}; do
+    printf "%2b " $i
+  done
+
+  printf "\n\n %3b  " 0
+  for i in {0..15}; do
+    echo -en "\033[48;5;${i}m  \033[m "
+  done
+
+  #for i in 16 52 88 124 160 196 232; do
+  for i in {0..6}; do
+    let "i = i*36 +16"
+    printf "\n\n %3b  " $i
+    for j in {0..35}; do
+      let "val = i+j"
+      echo -en "\033[48;5;${val}m  \033[m "
+    done
+  done
+
+  echo -e "\n"
+}
+
+genpasswd() {
+  alias genpasswd="length="${1:-38}";openssl rand -base64 8 |md5 |head -c${length}"
+}
+
+ssd() {
+  echo "Device         Total  Used  Free  Pct MntPoint"
+  df -h | grep "/dev/sd"
+  df -h | grep "/mnt/"
+}
+
+fancyPrompt() {
+  export PS1="\[\033[01;33m\][$USER@$HOSTNAME]\[\033[0;00m\] \[\033[01;32m\]\w\\$\[\033[0;00m\] "
+}
+
+trustDomain() {
+  ssh-keyscan $1 >>~/.ssh/known_hosts
+}
+
+backupGpgSecret() {
+  gpg --export-secret-keys >$1
+}
+
+findMergebase() {
+  git merge-base $(git status | grep branch | awk ' { print  $3 }') origin/master
+}
+
+rebaseToMaster() {
+  hash=$(git merge-base $(git status | grep branch | awk ' { print  $3 }') origin/master)
+  git rebase -i ${hash}
+}
+
+whosthere() {
+  lsof -nP -i4TCP:$1 | grep LISTEN
+}
+gpip() {
+  PIP_REQUIRE_VIRTUALENV="" pip3 "$@"
+}
+
+yaml2json() {
+  ruby -ryaml -rjson -e \
+    'puts JSON.pretty_generate(YAML.load(ARGF))' $*
+}
+
+dcleanup() {
+  docker rm -v $(docker ps --filter status=exited -q 2>/dev/null) 2>/dev/null
+  docker rmi $(docker images --filter dangling=true -q 2>/dev/null) 2>/dev/null
+}
+
+change_mac() {
+  openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//' | xargs sudo ifconfig en0 ether
+}
+
+mask() {
+  NEWMAC=$(openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//')
+  echo "Changing MAC " $(ifconfig en0 | grep ether)
+  sudo ifconfig en0 ether $NEWMAC
+  echo "New MAC is:" $(ifconfig en0 | grep ether)
+}
+
+flatten() {
+  find $1/ -mindepth 2 -type f -exec mv -i '{}' $1/ ';'
+}
+
+mcd() {
+  mkdir -p "$1"
+  cd "$1"
+}
+
+cdl() {
+  cd "$1"
+  ls
+}
+
+backup() { cp "$1"{,.bak}; }
+
+md5check() { md5sum "$1" | grep "$2"; }
+
+sbs() {
+  du -b --max-depth 1 | sort -nr |
+    perl -pe 's{([0-9]+)}{sprintf "%.1f%s", $1>=2**30? ($1/2**30, "G"): \
+    $1>=2**20? ($1/2**20, "M"): $1>=2**10? ($1/2**10, "K"): ($1, "")}e'
+}
+
+extract() {
+  if [ -f $1 ]; then
+    case $1 in
+    *.tar.bz2) tar xjf $1 ;;
+    *.tar.gz) tar xzf $1 ;;
+    *.bz2) bunzip2 $1 ;;
+    *.rar) unrar e $1 ;;
+    *.gz) gunzip $1 ;;
+    *.tar) tar xf $1 ;;
+    *.tbz2) tar xjf $1 ;;
+    *.tgz) tar xzf $1 ;;
+    *.zip) unzip $1 ;;
+    *.Z) uncompress $1 ;;
+    *.7z) 7z x $1 ;;
+    *) echo "'$1' cannot be extracted via extract()" ;;
+    esac
+  else
+    echo "'$1' is not a valid file"
+  fi
+}
+
+findPid() { lsof -t -c "$@"; }
+
+my_ps() { ps $@ -u $USER -o pid,%cpu,%mem,start,time,bsdtime,command; }
+
+ii() {
+  echo -e "\nYou are logged on ${RED}$HOST"
+  echo -e "\nAdditionnal information:$NC "
+  uname -a
+  echo -e "\n${RED}Users logged on:$NC "
+  w -h
+  echo -e "\n${RED}Current date :$NC "
+  date
+  echo -e "\n${RED}Machine stats :$NC "
+  uptime
+  echo -e "\n${RED}Current network location :$NC "
+  scselect
+  echo -e "\n${RED}Public facing IP Address :$NC "
+  myip
+  #echo -e "\n${RED}DNS Configuration:$NC " ; scutil --dns
+  echo
+}
+
+httpDebug() { /usr/bin/curl $@ -o /dev/null -w "dns: %{time_namelookup} connect: %{time_connect} pretransfer: %{time_pretransfer} starttransfer: %{time_starttransfer} total: %{time_total}\n"; }
+
+spotlight() { mdfind "kMDItemDisplayName == '$@'wc"; }
+
+cdfinder() {
+  cd "$(osascript -e 'tell application "Finder"' \
+    -e 'set myname to POSIX path of (target of window 1 as alias)' \
+    -e 'end tell' 2>/dev/null)"
+}
+urlEncode() {
+  # urlencode <string>
+  old_lc_collate=$LC_COLLATE
+  LC_COLLATE=C
+
+  local length="${#1}"
+  for ((i = 0; i < length; i++)); do
+    local c="${1:i:1}"
+    case $c in
+    [a-zA-Z0-9.~_-]) printf "$c" ;;
+    *) printf '%%%02X' "'$c" ;;
+    esac
+  done
+
+  LC_COLLATE=$old_lc_collate
+}
+
+urlDecode() {
+  # urldecode <string>
+
+  local url_encoded="${1//+/ }"
+  printf '%b' "${url_encoded//%/\\x}"
+}

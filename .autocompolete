@@ -1,0 +1,6 @@
+
+bind "TAB:complete"
+bind "set show-all-if-ambiguous off"
+bind "set menu-complete-display-prefix on"
+
+source /usr/local/share/gist/gist.bash

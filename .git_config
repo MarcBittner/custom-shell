@@ -1,0 +1,3 @@
+
+git config -l | grep -q 'commit.template=/Users/marcbitt/.git_commit_msg.txt' || git config --global commit.template ~/.git_commit_msg.txt > /dev/null
+git config -l | grep -q 'core.editor=atom --wait' || echo  git config --global core.editor "atom --wait" /dev/null

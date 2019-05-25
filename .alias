@@ -1,0 +1,95 @@
+# alias rebootInSafeMode='sudo nvram boot-args="-x -v" && shutdown -h now'
+# alias rebootInUnsafeMode='sudo nvram boot-args="-x -v" && shutdown -h now'
+# alias timeMachinePercentComplete='[[ $(tmutil status | awk '/_raw_Percent/ {print $3}' | grep -o '[0-9].[0-9]\+' | awk '{print $1*100}') ]] || echo "Time Machine Backup percentage not yet available"'
+alias ll='ls -alG'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias agent='eval $(ssh-agent)'
+alias pp='python -mjson.tool'
+alias ducks='du -cks * | sort -rn | head -15'
+# alias 'sudo su -'="sudo bash -"
+# alias 'root shell'='sudo su -'
+alias start_jenkins="launchctl list | grep -q jenkins || brew services start jenkins"
+alias kill_jenkins="brew services stop jenkins"
+alias start_ubuntu_docker="docker run \
+  --name ubuntu_$(uuid)\
+  -e HOST_IP=$(ifconfig en0 | awk '/ *inet /{print $2}') \
+  -v /Users/marcbitt/docker-shared/:/mnt/shared/ \
+  -t -i \
+  ubuntu /bin/bash"
+alias nuke='source ~/.bash_profile'
+alias create_virtualenv="mkvirtualenv -p /usr/bin/python3 $1"
+alias time_machine_fast="sudo sysctl debug.lowpri_throttle_enabled=0"
+alias time_machine_slow="sudo sysctl debug.lowpri_throttle_enabled=1"
+alias restart_gpung_agent="PID=$(ps -A | grep "gpg-agent" | grep -v "grep" | awk '{print $1}'); [ -n "${PID}" ] && kill -9 "${PID}"; eval $(gpg-agent --daemon)"
+alias clear_gpg_agent_cache="gpg-connect-agent reloadagent /bye"
+alias chx='chmod 755'
+alias chr='chmod 644'
+alias untarz='tar -xzf'
+alias untarj='tar -xjf'
+alias ls="ls -G"
+alias grep='grep --color=auto'
+alias tree="ls -R | grep ":$" | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'"
+alias lh="ls -d .[^.]*"
+alias ports="netstat -anv"
+alias gpg_show_subkeys="gpg2 --fingerprint --fingerprint"
+alias purge_cloud_cache="rm ~/Library/Caches/CloudKit/CloudKitMetadata*;killall cloudd"
+alias reset_trackpad="launchctl stop com.apple.Dock.agent;launchctl start com.apple.Dock.agent"
+alias backup_pam_sudo="sudo cp /etc/pam.d/sudo /etc/pam.d/sudo_backup_`date "+%Y-%m-%d_%H:%M"`"
+alias throw_away_the_keys="purgeSymlinksFrom --directory "~/.ssh/" --source "/Volumes/vault/keys/""
+alias vc="/Applications/Security/VeraCrypt.app/Contents/MacOS/VeraCrypt -t"
+alias pieceOfHistory="fc -l"
+alias gpgDebug="gpg2 -v -K --fingerprint --fingerprint"
+alias myip="curl http://ipecho.net/plain; echo"
+alias numFiles='echo $(ls -1 | wc -l)'      # numFiles:     Count of non-hidden files in current dir
+alias make1mb='mkfile 1m ./1MB.dat'         # make1mb:      Creates a file of 1mb size (all zeros)
+alias make5mb='mkfile 5m ./5MB.dat'         # make5mb:      Creates a file of 5mb size (all zeros)
+alias make10mb='mkfile 10m ./10MB.dat'      # make10mb:     Creates a file of 10mb size (all zeros)
+alias memHogsTop='top -l 1 -o rsize | head -20'
+alias memHogsPs='ps wwaxm -o pid,stat,vsize,rss,time,command | head -10'
+alias cpu_hogs='ps wwaxr -o pid,stat,%cpu,time,command | head -10'
+alias topForever='top -l 9999999 -s 10 -o cpu'
+alias ttop="top -R -F -s 10 -o rsize"
+alias altMyip='curl ip.appspot.com'                 # myip:         Public facing IP Address
+alias netCons='lsof -i'                             # netCons:      Show all open TCP/IP sockets
+alias flushDNS='dscacheutil -flushcache'            # flushDNS:     Flush out the DNS Cache
+alias lsock='sudo /usr/sbin/lsof -i -P'             # lsock:        Display open sockets
+alias lsockU='sudo /usr/sbin/lsof -nP | grep UDP'   # lsockU:       Display only open UDP sockets
+alias lsockT='sudo /usr/sbin/lsof -nP | grep TCP'   # lsockT:       Display only open TCP sockets
+alias ipInfo0='ipconfig getpacket en0'              # ipInfo0:      Get info on connections for en0
+alias ipInfo1='ipconfig getpacket en1'              # ipInfo1:      Get info on connections for en1
+alias openPorts='sudo lsof -i | grep LISTEN'        # openPorts:    All listening connections
+alias showBlocked='sudo ipfw list'                  # showBlocked:  All ipfw rules inc/ blocked IPs
+alias mountReadWrite='/sbin/mount -uw /'    #ew  mountReadWrite:   For use when booted into single-user
+alias cleanupDS="find . -type f -name '*.DS_Store' -ls -delete" #   cleanupDS:  Recursively delete .DS_Store files
+alias finderShowHidden='defaults write com.apple.finder ShowAllFiles TRUE' #   finderShowHidden:   Show hidden files in Finder
+alias finderHideHidden='defaults write com.apple.finder ShowAllFiles FALSE' #   finderHideHidden:   Hide hidden files in Finder
+alias cleanupLS="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill -r -domain local -domain system -domain user && killall Finder" #   cleanupLS:  Clean up LaunchServices to remove duplicates in the "Open With" menu
+alias screensaverDesktop='/System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background' #    screensaverDesktop: Run a screensaver on the Desktop
+
+alias emptyTrash="sudo rm -rfv /Volumes/*/.Trashes; sudo rm -rfv ~/.Trash"
+
+# Show/hide hidden files in Finder
+alias show="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
+alias hide="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
+
+# URL-encode strings
+alias urlencode='python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1]);"'
+
+# Merge PDF files
+# Usage: `mergepdf -o output.pdf input{1,2,3}.pdf`
+alias mergepdf='/System/Library/Automator/Combine\ PDF\ Pages.action/Contents/Resources/join.py'
+
+# Kill all the tabs in Chrome to free up memory
+
+alias nukeChrome="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
+
+alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
+
+
+alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias localip="ipconfig getifaddr en0"
+alias ips="ifconfig -a | grep -o 'inet6\? \(addr:\)\?\s\?\(\(\([0-9]\+\.\)\{3\}[0-9]\+\)\|[a-fA-F0-9:]\+\)' | awk '{ sub(/inet6? (addr:)? ?/, \"\"); print }'"
+alias ..="cd ../"
+alias ...="cd ../../"
+alias ....="cd ../../../"

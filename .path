@@ -1,0 +1,12 @@
+# pathing insanity
+# TODO: make this not terrible.
+
+export PATH=$PATH:/home/username/bin:/usr/local/homebrew
+export PATH=$PATH:~/gits/format/bin/
+export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH=$PATH:/Applications/Security/VeraCrypt.app/Contents/MacOS/VeraCrypt
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOROOT/bin
+export PATH=$PATH:~/scripts
+export PATH=$PATH:/Users/phaedrus/go/bin
+export WORKON_HOME=~/Envs

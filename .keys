@@ -1,0 +1,24 @@
+
+keysDebug=0
+
+eval $(ssh-agent) > /dev/null
+eval "$(goenv init -)"
+
+#vc --mount /Volumes/kali/etc/failsafe/vault  --non-interactive -p
+
+keySourceLocation="${keySourceLocation:-/Volumes/vault/keys/}"
+keyTargetLocation="${keyTargetLocation:-"${HOME}/.ssh/"}"
+keyTargetLocation="$(addTrailingSlash "${keyTargetLocation}")"
+keySourceLocation="$(addTrailingSlash "${keySourceLocation}")"
+purgeSymlinksFrom --directory  "$(expandPath ${keyTargetLocation})" --source "$(expandPath ${keySourceLocation})"
+directoryExists "$(expandPath ${keySourceLocation})" && symlinkAllFiles --directory "$(expandPath ${keyTargetLocation})" --source "$(expandPath ${keySourceLocation})"
+
+[[ keysDebug -gt 0 ]] && echo -e "keySourceLocation: ${keySourceLocation}\nkeyTargetLocation: ${keyTargetLocation}"
+
+# ssh-add -q ~/.ssh/* &> /dev/null
+[[ keysDebug -gt 0 ]] && ssh-add ~/.ssh/marc_bittner_opswork || ssh-add -q ~/.ssh/marc_bittner_opswork &> /dev/null
+[[ keysDebug -gt 0 ]]  && ssh-add ~/.ssh/MarcBittnerRing-GitHub  ||  ssh-add -q ~/.ssh/MarcBittnerRing-GitHub &> /dev/null
+[[ keysDebug -gt 0 ]]  &&  ssh-add -l
+
+cd ~
+#start_jenkins

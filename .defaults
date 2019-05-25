@@ -1,0 +1,61 @@
+
+osascript -e 'tell application "System Preferences" to quit'
+
+sudo -v
+
+defaults write com.apple.dashboard mcx-disabled -boolean YES
+defaults write -g ApplePressAndHoldEnabled -bool false
+defaults write com.apple.finder QLEnableTextSelection -bool true
+defaults write com.apple.finder AppleShowAllFiles -boolean true
+defaults write com.apple.finder AppleShowAllFiles TRUE
+chflags nohidden ~/Library
+defaults write -g NSNavPanelExpandedStateForSaveMode -bool true && \
+defaults write -g NSNavPanelExpandedStateForSaveMode2 -bool true
+
+# Save screenshots to the Pictures/Screenshots
+# mkdir -p ${HOME}/Documents/ && defaults write com.apple.screencapture location -string "${HOME}/Documents/"
+
+#defaults write com.apple.screencapture type -string “png”
+defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+#sudo nvram SystemAudioVolume=" "
+
+# sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
+
+# Prevent Time Machine from prompting to use new hard drives as backup volume
+defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
+
+
+# Use list view in all Finder windows by default
+# Four-letter codes for the other view modes: `icnv`, `clmv`, `Flwv`
+defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
+
+# Trackpad: enable tap 4to click for this user and for the login screen
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+
+# Enable full keyboard access for all controls
+defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
+
+# Keep folders on top when sorting by name
+
+defaults write com.apple.finder _FXSortFoldersFirst -bool true
+
+# Avoid creating .DS_Store files on network or USB volumes
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
+
+# Prevent Photos from opening automatically when devices are plugged in
+defaults -currentHost write com.apple.ImageCapture disableHotPlug -bool true
+
+# Reveal IP address, hostname, OS version, etc. when clicking the clock
+# in the login window
+sudo defaults write /Library/Preferences/com.apple.loginwindow AdminHostInfo HostName
+
+# Restart automatically if the computer freezes
+sudo systemsetup -setrestartfreeze on
+
+
+killall SystemUIServer
+killall Finder
+killall Dock
