@@ -32,7 +32,6 @@ export MANPAGER='less -X';
 # https://stackoverflow.com/a/42265848/96656
 
 export GPG_TTY=$(tty);
-
 export HISTSIZE='32768';
 export HISTFILESIZE="${HISTSIZE}";
 export HISTCONTROL="ignoreboth:erasedups"

@@ -76,4 +76,4 @@ trap 'timer_start' DEBUG
 # { sleep 0.1 ; builtin kill -USR1 $$ ; } & disown
 
 # added by pipsi (https://github.com/mitsuhiko/pipsi)
-export PATH="/Users/marcbitt/.local/bin:$PATH"
+export PATH="/Users/phaedrus/.local/bin:$PATH"

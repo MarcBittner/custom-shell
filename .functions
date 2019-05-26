@@ -866,9 +866,7 @@ function timer_start() {
 }
 
 function find-aws-public-ip() {
-
   aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text --profile security --region us-east-1
-
 }
 
 function timer_stop() {
