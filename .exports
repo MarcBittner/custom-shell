@@ -32,7 +32,6 @@ export MANPAGER='less -X';
 # https://stackoverflow.com/a/42265848/96656
 
 export GPG_TTY=$(tty);
-
 export HISTSIZE='32768';
 export HISTFILESIZE="${HISTSIZE}";
 export HISTCONTROL="ignoreboth:erasedups"
@@ -40,6 +39,13 @@ export HISTIGNORE="ls:bg:fg"
 export HISTTIMEFORMAT="%c: "
 export EDITOR=vim
 export VISUAL=vim
+
+
+# Set CLICOLOR if you want Ansi Colors in iTerm2
+export CLICOLOR=1
+
+# Set colors to match iTerm2 Terminal Colors
+export TERM=xterm-256color
 
 # added by Anaconda3 5.2.0 installer
 export PATH="/Users/phaedrus/anaconda3/bin:$PATH"

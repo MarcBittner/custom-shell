@@ -1,4 +1,3 @@
-
 keysDebug=0
 
 eval $(ssh-agent) > /dev/null
@@ -16,8 +15,14 @@ directoryExists "$(expandPath ${keySourceLocation})" && symlinkAllFiles --direct
 [[ keysDebug -gt 0 ]] && echo -e "keySourceLocation: ${keySourceLocation}\nkeyTargetLocation: ${keyTargetLocation}"
 
 # ssh-add -q ~/.ssh/* &> /dev/null
-[[ keysDebug -gt 0 ]] && ssh-add ~/.ssh/marc_bittner_opswork || ssh-add -q ~/.ssh/marc_bittner_opswork &> /dev/null
-[[ keysDebug -gt 0 ]]  && ssh-add ~/.ssh/MarcBittnerRing-GitHub  ||  ssh-add -q ~/.ssh/MarcBittnerRing-GitHub &> /dev/null
+
+keys=( MarcBittnerPersonal.05252019 id_ed25519_disqo_05312019 MarcBittnerPersonal.ed25519.05312019 ghostlocalhost.pem)
+
+for key in "${keys[@]}"
+  do
+    [[ keysDebug -gt 0 ]] && ssh-add ~/.ssh/${key} || ssh-add -q ~/.ssh/${key} &> /dev/null
+done
+
 [[ keysDebug -gt 0 ]]  &&  ssh-add -l
 
 cd ~
