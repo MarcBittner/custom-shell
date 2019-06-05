@@ -1,4 +1,3 @@
-
 keysDebug=0
 
 eval $(ssh-agent) > /dev/null
@@ -17,7 +16,7 @@ directoryExists "$(expandPath ${keySourceLocation})" && symlinkAllFiles --direct
 
 # ssh-add -q ~/.ssh/* &> /dev/null
 
-keys=( marc_bittner_opswork MarcBittnerRing-GitHub id_ed25519_disqo_05312019 MarcBittnerPersonal.ed25519.05312019 )
+keys=( MarcBittnerPersonal.05252019 id_ed25519_disqo_05312019 MarcBittnerPersonal.ed25519.05312019 ghostlocalhost.pem)
 
 for key in "${keys[@]}"
   do
