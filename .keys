@@ -16,7 +16,14 @@ directoryExists "$(expandPath ${keySourceLocation})" && symlinkAllFiles --direct
 
 # ssh-add -q ~/.ssh/* &> /dev/null
 
-keys=( MarcBittnerPersonal.05252019 id_ed25519_disqo_05312019 MarcBittnerPersonal.ed25519.05312019 ghostlocalhost.pem)
+keys=( MarcBittnerPersonal.05252019 \
+	id_ed25519_disqo_05312019 \
+	MarcBittnerPersonal.ed25519.05312019 \
+	ghostlocalhost.pem \
+	bmv-production.pem \
+	devops-prd-gitlab.pem \ 
+        id_localhost@sec.technology \
+	)
 
 for key in "${keys[@]}"
   do

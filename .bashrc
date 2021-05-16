@@ -77,3 +77,11 @@ trap 'timer_start' DEBUG
 
 # added by pipsi (https://github.com/mitsuhiko/pipsi)
 export PATH="/Users/phaedrus/.local/bin:$PATH"
+
+#OktaAWSCLI
+if [[ -f "$HOME/.okta/bash_functions" ]]; then
+    . "$HOME/.okta/bash_functions"
+fi
+if [[ -d "$HOME/.okta/bin" && ":$PATH:" != *":$HOME/.okta/bin:"* ]]; then
+    PATH="$HOME/.okta/bin:$PATH"
+fi

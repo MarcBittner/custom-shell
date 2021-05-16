@@ -1,9 +1,21 @@
+ ml() {
+    mkdir -p "$(dirname "$1")" &&
+    rsync -aP --no-links "$1" "$2" &&
+    ln -sf "$2" "$1"
+  }
+
+  ml-becareful() {
+     mkdir -p "$(dirname "$1")" &&
+     ln -sf "$2" "$1"
+   }
+
+
 requireProgram() {
 
   local functionName debugOutput
   unset ${functionName} ${debugOutput}
   functionName="${FUNCNAME[0]}"
-  debugOutput=1
+  debugOutput=0
 
   command -v ${1} >/dev/null 2>&1 &&
     {
@@ -16,9 +28,154 @@ requireProgram() {
     }
 }
 
+functionRequires() {
+
+  local functionName debugOutput scriptName
+  #unset ${functionName} ${debugOutput}
+  functionName="${FUNCNAME[0]}"
+
+  while [[ ${1} ]]; do
+      case "${1}" in
+        --requirement)
+          requirement=${2}
+          shift
+          ;;
+        --debug)
+          debugOutput=1
+          ;;
+          *)
+            echo "Unknown parameter: ${1}" >&2
+            return 1
+            ;;
+          esac
+
+          if ! shift; then
+            echo 'Missing parameter argument.' >&2
+            return 1
+          fi
+        done
+
+        if [[ -z ${requirement} ]] \
+          ; then
+          echo "${functionName}: one or more required params are undefined"
+          return 1
+        fi
+
+  [[ debugOutput -gt 0 ]] && echo "[debug] scriptName: ${scriptName}"
+  [[ debugOutput -gt 0 ]] && echo "[debug] functionName: ${functionName}"
+
+  command -v ${requirement} >/dev/null 2>&1 &&
+    {
+      [[ debugOutput -ne 0 ]] && echo >&2 "[debug] ${scriptName} requires ${requirement} and it is installed."
+      return 0
+    } ||
+    {
+      [[ debugOutput -ne 0 ]] && echo >&2 "[debug] ${scriptName} requires ${requirement} but it's not installed.  Aborting."
+      return 1
+    }
+}
+
+requires() {
+
+  local functionName debugOutput scriptName
+  #unset ${functionName} ${debugOutput}
+  scriptName="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
+  functionName="${FUNCNAME[0]}"
+
+  while [[ ${1} ]]; do
+      case "${1}" in
+        --requirement)
+          requirement=${2}
+          shift
+          ;;
+        --debug)
+          debugOutput=1
+          ;;
+          *)
+            echo "Unknown parameter: ${1}" >&2
+            return 1
+            ;;
+          esac
+
+          if ! shift; then
+            echo 'Missing parameter argument.' >&2
+            return 1
+          fi
+        done
+
+        if [[ -z ${requirement} ]] \
+          ; then
+          echo "${functionName}: one or more required params are undefined"
+          return 1
+        fi
+
+  [[ debugOutput -gt 0 ]] && echo "[debug] scriptName: ${scriptName}"
+  [[ debugOutput -gt 0 ]] && echo "[debug] functionName: ${functionName}"
+
+  command -v ${requirement} >/dev/null 2>&1 &&
+    {
+      [[ debugOutput -ne 0 ]] && echo >&2 "[debug] ${scriptName} requires ${requirement} and it is installed."
+      return 0
+    } ||
+    {
+      [[ debugOutput -ne 0 ]] && echo >&2 "[debug] ${scriptName} requires ${requirement} but it's not installed.  Aborting."
+      return 1
+    }
+}
+
+# requires() {
+#
+#   local functionName debugOutput
+#   unset ${functionName} ${debugOutput}
+#   functionName="${FUNCNAME[0]}"
+#   debugOutput=1
+#
+#   command -v ${1} >/dev/null 2>&1 &&
+#     {
+#       [[ DebugOutput -ne 0 ]] && echo >&2 "${functionName} requires ${1} and it is installed."
+#       return 0
+#     } ||
+#     {
+#       [[ DebugOutput -ne 0 ]] && echo >&2 "${functionName} requires ${1} but it's not installed.  Aborting."
+#       return 1
+#     }
+# }
+
+
 chrome () {
     open -a "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" "$1"
   }
+
+
+
+dockerTerminal() {
+  local containerId
+  DebugOutput=0
+  while [[ ${1} ]]; do
+    case "${1}" in
+    --percent)
+      GetPercent=1
+      ;;
+    --debug)
+      DebugOutput=1
+      ;;
+    *)
+      echo "Unknown parameter: ${1}" >&2
+      return 1
+      ;;
+    esac
+
+    if ! shift; then
+      echo 'Missing parameter argument.' >&2
+      return 1
+    fi
+  done
+
+  [[ DebugOutput -gt 0 ]] && echo -e "Full output: \n $(tmutil status)"
+
+  docker run -it <image> /bin/bash
+
+}
 
 
   trackAllGitBranches() {
@@ -33,7 +190,7 @@ chrome () {
         [[ debugOutput -gt 0 ]] && echo >&2 "Git repository found. Tracking all branches"
         for branch in $(git branch --all | grep '^\s*remotes' | egrep --invert-match '(:?HEAD|master)$');
               do
-                git branch --track "${branch##*/}" "$branch"
+                git branch  --track "${branch##*/}" "$branch"
               done
         return 0
       } ||
@@ -43,6 +200,12 @@ chrome () {
       }
   }
 
+pushPiiVault() {
+  time=$(date +%Y%m%d_%H%M%S%Z)
+  docker build -t piivault-piivault-cicd-base:${time} .
+  docker tag piivault-piivault-cicd-base:${time} 396457961716.dkr.ecr.us-west-2.amazonaws.com/piivault-piivault-cicd-base:${time}
+  docker push 396457961716.dkr.ecr.us-west-2.amazonaws.com/piivault-piivault-cicd-base:${time}
+}
 
 getTimeMachineInfo() {
   local percent GetPercent DebugOutput
@@ -458,23 +621,6 @@ EOF
   echo -n "${PW}"
 }
 
-functionRequires() {
-
-  local functionName debugOutput
-  unset ${functionName} ${debugOutput}
-  functionName="${FUNCNAME[0]}"
-  debugOutput=1
-
-  command -v ${1} >/dev/null 2>&1 &&
-    {
-      [[ DebugOutput -ne 0 ]] && echo >&2 "${functionName} requires ${1} and it is installed."
-      return 0
-    } ||
-    {
-      [[ DebugOutput -ne 0 ]] && echo >&2 "${functionName} requires ${1} but it's not installed.  Aborting."
-      return 1
-    }
-}
 
 function ContainsString() {
 
@@ -896,6 +1042,8 @@ function timer_stop() {
 }
 
 printTimestampReference() {
+  functionRequires --requirement gdate
+  echo ${BASH_ALIASES[date]} | grep -q gdate || echo "this function requires date to be aliased to gdates"
   cat <<EOD
         Format/result           |       Command              |          Output
 --------------------------------+----------------------------+------------------------------

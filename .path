@@ -9,4 +9,8 @@ export GOPATH=$HOME/go
 export PATH=$PATH:$GOROOT/bin
 export PATH=$PATH:~/scripts
 export PATH=$PATH:/Users/phaedrus/go/bin
-export WORKON_HOME=~/Envs
+export WORKON_HOME=~/Env
+export PATH=$PATH:/usr/local/microsoft/powershell/6/pwsh
+
+
+

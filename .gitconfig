@@ -1,4 +1,4 @@
-[core]
+ [core]
 	excludesfile = ~/.gitignore_global
 	editor = atom --wait
 	compression = -1
@@ -10,8 +10,8 @@
 	trustExitCode = true
 [user]
 	name = Marc Bittner
-	email = marc.bittner@ring.com
-	singingkey = 0x015FEB9CB8BE00E4
+	email = marc.bittner@disqo.com
+#	singingkey = 0x015FEB9CB8BE00E4
 [commit]
 	template = /Users/phaedrus/.git_commit_msg.txt
 [rebase]

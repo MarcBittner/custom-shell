@@ -1,23 +1,30 @@
 # alias rebootInSafeMode='sudo nvram boot-args="-x -v" && shutdown -h now'
 # alias rebootInUnsafeMode='sudo nvram boot-args="-x -v" && shutdown -h now'
 # alias timeMachinePercentComplete='[[ $(tmutil status | awk '/_raw_Percent/ {print $3}' | grep -o '[0-9].[0-9]\+' | awk '{print $1*100}') ]] || echo "Time Machine Backup percentage not yet available"'
+alias gitWrecked="git add -A && git commit -m "WIP" && git push"
 alias ll='ls -alG'
+alias date='gdate'
 alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias agent='eval $(ssh-agent)'
 alias pp='python -mjson.tool'
 alias ducks='du -cks * | sort -rn | head -15'
+alias current_path="echo $( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # alias 'sudo su -'="sudo bash -"
 # alias 'root shell'='sudo su -'
+alias backup_history="cp ~/.bash_history ~/.bash_history.$(date +%y%m%d_%H%M%S)"
 alias start_jenkins="launchctl list | grep -q jenkins || brew services start jenkins"
 alias kill_jenkins="brew services stop jenkins"
+alias "disable_airdrop"="defaults write com.apple.NetworkBrowser DisableAirDrop -bool YES"
+alias "enable_airdrop"="defaults write com.apple.NetworkBrowser DisableAirDrop -bool NO"
 alias start_ubuntu_docker="docker run \
   --name ubuntu_$(uuid)\
   -e HOST_IP=$(ifconfig en0 | awk '/ *inet /{print $2}') \
   -v /Users/marcbitt/docker-shared/:/mnt/shared/ \
   -t -i \
   ubuntu /bin/bash"
-alias nuke='source ~/.bash_profile'
+alias nuke='currentDir=$(pwd); source ~/.bash_profile;cd  "$currentDir"'
+#alias slant="figlet -f smslant -r -w 40 $1"
 alias create_virtualenv="mkvirtualenv -p /usr/bin/python3 $1"
 alias time_machine_fast="sudo sysctl debug.lowpri_throttle_enabled=0"
 alias time_machine_slow="sudo sysctl debug.lowpri_throttle_enabled=1"
@@ -93,3 +100,7 @@ alias ips="ifconfig -a | grep -o 'inet6\? \(addr:\)\?\s\?\(\(\([0-9]\+\.\)\{3\}[
 alias ..="cd ../"
 alias ...="cd ../../"
 alias ....="cd ../../../"
+alias j9="export JAVA_HOME=`/usr/libexec/java_home -v 9`; java -version"
+alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8`; java -version"
+alias j7="export JAVA_HOME=`/usr/libexec/java_home -v 1.7`; java -version"
+alias j6="export JAVA_HOME=`/usr/libexec/java_home -v 1.6`; java -version"

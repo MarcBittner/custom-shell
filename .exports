@@ -3,9 +3,6 @@ export EDITOR='vim';
 
 # Any more secure way we can do this?
 
-export GITHUB_TOKEN=ff0f2f929cf177cab2b054bbd0d5cac30f2f1a7e
-export GIST_ID=531f4a60556f986baa87bd48ad3306fb
-
 # Enable persistent REPL history for `node`.
 export NODE_REPL_HISTORY=~/.node_history;
 
