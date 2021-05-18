@@ -582,6 +582,20 @@ directoryExists() {
     }
 }
 
+fileExists() {
+  DebugOutput=${2:-0}
+#  cd ${1:?pathname expected} >/dev/null 2>&1 &&
+[ -f ${1:?filepath expected} ] &&
+    {
+      [[ DebugOutput -ne 0 ]] && echo >&2 "${1} exists"
+      return 0
+    } ||
+    {
+      [[ DebugOutput -ne 0 ]] && echo >&2 "Unable to verify ${1} - Aborting."
+      return 1
+    }
+}
+
 isMounted() {
   DebugOutput=${2:-0}
   grep -qi ${1:?mount name expected} <(mount) &&

@@ -90,7 +90,7 @@ alias mergepdf='/System/Library/Automator/Combine\ PDF\ Pages.action/Contents/Re
 # Kill all the tabs in Chrome to free up memory
 
 alias nukeChrome="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
-
+alias curl="curl -vvvv"
 alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
 
 
@@ -104,3 +104,4 @@ alias j9="export JAVA_HOME=`/usr/libexec/java_home -v 9`; java -version"
 alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8`; java -version"
 alias j7="export JAVA_HOME=`/usr/libexec/java_home -v 1.7`; java -version"
 alias j6="export JAVA_HOME=`/usr/libexec/java_home -v 1.6`; java -version"
+alias install_gam="bash <(curl -s -S -L https://git.io/install-gam)"

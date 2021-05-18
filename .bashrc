@@ -21,6 +21,12 @@ unalias -a
 
 [ -r ~/.defaults ] && . ~/.defaults
 
+# symlinks
+
+[ -r ~/.symlinks ] && . ~/.symlinks
+
+[ -r ~/.gpg_config ] && . ~/.gpg_config
+
 # Timer
 
 trap 'timer_start' DEBUG
