@@ -720,6 +720,65 @@ openInChrome() {
   open -a "Google Chrome" $1
 }
 
+marantz-command() {
+  local ip command
+  DebugOutput=0
+
+  while [[ ${1} ]]; do
+    case "${1}" in
+    --command)
+      command=${2}
+      shift
+      ;;
+    --ip)
+      ip=${2}
+      shift
+      ;;
+    --debug)
+      DebugOutput=1
+      ;;
+    *)
+      echo "Unknown parameter: ${1}" >&2
+      return 1
+      ;;
+    esac
+
+    if ! shift; then
+      echo 'Missing parameter argument.' >&2
+      return 1
+    fi
+  done
+
+  if [[ -z ${command} ]]; then #|| \
+    # -z ${output} ]]; then
+    echo "${FUNCNAME}: one or more variables are undefined"
+    return 1
+  fi
+
+  datestamp="$(date +%s)"
+  Ip=${ip:-'10.10.10.226'}
+
+  case $command in
+      poweron)
+        curl -vvvv http://${Ip}:8080/goform/formiPhoneAppDirect.xml?PWON
+        ;;
+      poweroff)
+        curl -vvvv http://${Ip}:8080/goform/formiPhoneAppDirect.xml?PWSTANDBY
+        ;;
+      set-reference)
+        curl -vvvv http://10.10.10.226:8080/goform/formiPhoneAppDirect.xml?MV80
+        ;;
+      set-listening)
+        curl -vvvv http://10.10.10.226:8080/goform/formiPhoneAppDirect.xml?MV65
+        ;;
+      get-volume)
+        curl -vvvv http://10.10.10.226:8080/goform/formiPhoneAppDirect.xml?MV?
+        ;;
+      *) echo "'$command' is not supported"
+        ;;
+  esac
+}
+
 tarchive() {
   local directory output
   DebugOutput=0
