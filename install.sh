@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+ 
 [ -r ./.functions ] && . ./.functions
 
 datestamp="$(date +%s)"

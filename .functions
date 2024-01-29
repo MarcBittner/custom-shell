@@ -1007,9 +1007,7 @@ colorReference256() {
   echo -e "\n"
 }
 
-genpasswd() {
-  alias genpasswd="length="${1:-38}";openssl rand -base64 8 |md5 |head -c${length}"
-}
+e
 
 ssd() {
   echo "Device         Total  Used  Free  Pct MntPoint"
