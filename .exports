@@ -63,3 +63,5 @@ shopt -s nocaseglob
 shopt -s cdspell
 
 shopt -s histappend
+
+export BASH_SILENCE_DEPRECATION_WARNING=1
