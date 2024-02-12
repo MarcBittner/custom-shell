@@ -98,3 +98,5 @@ alias ssh-nuke-fox='ssh-add -D && ssh-add ~/.ssh/fox.pem  && ssh-add -L'
 alias git-wrecked='git add -A && git commit -m dumy for rebase && git push'
 alias gitWrecked='git add -A && git commit -m dumy for rebase && git push'
 alias git-nuke='git fetch origin && git reset --hard origin/master && git checkout master'
+alias k=kubectl
+alias date=gdate
