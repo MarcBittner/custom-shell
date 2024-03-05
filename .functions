@@ -511,6 +511,24 @@ function ContainsString() {
   fi
 }
 
+function isNumeric() {
+  local input debugOutput
+  unset ${input} ${debugOutput}
+  functionName="${FUNCNAME[0]}"
+
+[[ $line1 =~ ^[0-9]+$ ]] &&
+    [[ DebugOutput -gt 0 ]] && echo "token: ${token}"
+
+    if [[ $input =~ ^[0-9]+$ ]]; then
+      [[ DebugOutput -gt 0 ]] && echo "The input is numeric."
+      return 0
+    else
+      [[ DebugOutput -gt 0 ]] && echo "The input is not numeric."
+      return 1
+    fi
+
+}
+
 list-github-repos() {
   local repos counter allrepos
   unset repos counter allrepos
